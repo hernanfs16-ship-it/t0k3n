@@ -1,28 +1,25 @@
 import json
 import re
-import requests
+import cloudscraper
 
-# REEMPLAZA ESTA URL POR LA PÁGINA REAL
 URL = "https://bestleague.life/tok.html"
-
-headers = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    )
-}
 
 def extract_mt_variable():
     try:
-        print(f"Conectando a {URL}...")
-        response = requests.get(URL, headers=headers, timeout=15)
+        print(f"Conectando a {URL} con cloudscraper...")
+        
+        # Usamos cloudscraper en lugar de requests para evadir bloqueos antibot
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(URL, timeout=15)
         response.raise_for_status()
         html_content = response.text
 
-        # Expresión regular para capturar el contenido del array var mt = [ ... ];
-        pattern = r"var\s+mt\s*=\s*(\[\s*\{.*?\}\s*\]);"
-        match = re.search(pattern, html_content, re.DOTALL)
+        # Imprimimos un fragmento para confirmar qué respondió la página
+        print(f"Página descargada. Inicio del HTML: {html_content[:150]}...")
+
+        # Expresión regular ajustada para capturar el contenido del array
+        pattern = r"var\s+mt\s*=\s*(\[.*?\]);"
+        match = re.search(pattern, html_content, re.DOTALL | re.IGNORECASE)
 
         if match:
             json_str = match.group(1)
@@ -35,7 +32,8 @@ def extract_mt_variable():
 
             print(f"Éxito: Se extrajeron {len(mt_data)} elementos y se guardaron en tokens.json")
         else:
-            print("No se encontró la variable 'var mt' en el código fuente de la página.")
+            print("Error: No se encontró la variable 'var mt' en el código fuente.")
+            print("Es posible que la página siga bloqueando al bot o requiera JavaScript para cargar.")
 
     except Exception as e:
         print(f"Error al procesar la página: {e}")
