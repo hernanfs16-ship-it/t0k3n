@@ -2,9 +2,7 @@ name: Daily Token Scraper
 
 on:
   schedule:
-    # Se ejecuta todos los días a las 00:00 UTC
     - cron: '0 0 * * *'
-  # Permite ejecutar el bot manualmente
   workflow_dispatch:
 
 jobs:
@@ -22,7 +20,7 @@ jobs:
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install requests
+          pip install cloudscraper
 
       - name: Ejecutar Scraper
         run: python scraper.py
@@ -31,6 +29,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add tokens.json
-          # Solo hace commit si hay cambios nuevos
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Actualizar tokens mt" && git push)
+          
+          # Solo intenta hacer commit si el archivo tokens.json existe realmente
+          if [ -f tokens.json ]; then
+            git add tokens.json
+            git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Actualizar tokens mt" && git push)
+            echo "Cambios guardados en el repositorio."
+          else
+            echo "El archivo tokens.json no se generó hoy. Se omite el commit para evitar errores."
+          fi
