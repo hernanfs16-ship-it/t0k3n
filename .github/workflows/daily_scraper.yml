@@ -3,7 +3,7 @@ name: Daily Token Scraper
 on:
   schedule:
     # 00:17 en Argentina (UTC-3)
-    - cron: "17 3 * * *"
+    - cron: "0 3,15 * * *"
   workflow_dispatch:
 
 permissions:
