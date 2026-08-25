@@ -2,12 +2,17 @@ name: Daily Token Scraper
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    # 00:17 en Argentina (UTC-3)
+    - cron: "17 3 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
@@ -15,25 +20,26 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.11"
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install curl_cffi
+          pip install curl_cffi json5
 
-      - name: Ejecutar Scraper
+      - name: Ejecutar scraper
         run: python scraper.py
 
-      - name: Guardar cambios en el repositorio
+      - name: Guardar cambios
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          
-          if [ -f tokens.json ]; then
-            git add tokens.json
-            git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update: Actualizar tokens mt" && git push)
-            echo "Cambios guardados en el repositorio."
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          git add tokens.json
+
+          if git diff --cached --quiet; then
+            echo "No hubo cambios en tokens.json."
           else
-            echo "El archivo tokens.json no se generó hoy. Se omite el commit para evitar errores."
+            git commit -m "Auto-update: actualizar tokens mt"
+            git push
           fi
